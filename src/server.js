@@ -1,3 +1,5 @@
+import http from 'http';
+import WebSocket from 'ws';
 import express from 'express';
 
 const app = express();
@@ -9,4 +11,8 @@ app.get('/', (req, res) => res.render('home'));
 app.get('/*', (req, res) => res.redirect('/'));
 
 const listenHandler = () => console.log('Listening on http://localhost:3000');
-app.listen(3000, listenHandler);
+
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server }); // 매개변수 없어도 됨.
+
+server.listen(3000, listenHandler);
