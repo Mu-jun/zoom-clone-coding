@@ -15,8 +15,15 @@ const listenHandler = () => console.log('Listening on http://localhost:3000');
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server }); // 매개변수 없어도 됨.
 
-function handleConnection(socket) {
-  console.log(socket, '\nSocket');
-}
-wss.on('connection', handleConnection);
+wss.on('connection', (socket) => {
+  console.log('Connect to the Browser');
+  socket.send('hello~');
+  socket.on('message', (data) => {
+    console.log(data.toString('utf8'));
+  });
+  socket.on('close', () => {
+    console.log('Disconneted from the Browser');
+  });
+});
+
 server.listen(3000, listenHandler);
