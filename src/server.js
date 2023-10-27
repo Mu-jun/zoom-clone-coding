@@ -1,5 +1,6 @@
 import http from 'http';
 import WebSocket from 'ws';
+import SocketIO from 'socket.io';
 import express from 'express';
 
 const app = express();
@@ -13,8 +14,16 @@ app.get('/*', (req, res) => res.redirect('/'));
 const listenHandler = () => console.log('Listening on http://localhost:3000');
 
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server }); // 매개변수 없어도 됨.
 
+// Using Socket.IO
+const io = SocketIO(server);
+
+io.on('connection', (socket) => {
+  console.log(socket, '\nsocket');
+});
+
+/* Using WebSocket
+const wss = new WebSocket.Server({ server }); // 매개변수 없어도 됨.
 const sockets = [];
 
 wss.on('connection', (socket) => {
@@ -35,6 +44,6 @@ wss.on('connection', (socket) => {
     console.log(`Disconneted from the ${socket.nickname}`);
   });
   console.log('Connect to the Browser');
-});
+}); */
 
 server.listen(3000, listenHandler);
