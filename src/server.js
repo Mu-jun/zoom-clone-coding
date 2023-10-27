@@ -19,7 +19,13 @@ const server = http.createServer(app);
 const io = SocketIO(server);
 
 io.on('connection', (socket) => {
-  console.log(socket, '\nsocket');
+  socket.on('enter_room', (msg, done) => {
+    console.log(msg);
+    console.log(typeof msg);
+    setTimeout(() => {
+      done();
+    }, 5000);
+  });
 });
 
 /* Using WebSocket

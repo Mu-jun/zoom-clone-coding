@@ -1,6 +1,19 @@
+const room = document.querySelector('#room');
+const form = room.querySelector('form');
+
 const socket = io();
 
-/* const messageList = document.querySelector('ul');
+const handleSubmit = (event) => {
+  event.preventDefault();
+  const input = form.querySelector('input');
+  socket.emit('enter_room', { payload: input.value }, () => {
+    console.log('Server is done!');
+  });
+};
+form.addEventListener('submit', handleSubmit);
+
+/* Using WebSocket
+const messageList = document.querySelector('ul');
 const nicknameForm = document.querySelector('form#nick');
 const messageForm = document.querySelector('form#msg');
 
