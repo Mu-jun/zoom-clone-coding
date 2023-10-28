@@ -1,14 +1,20 @@
+const home = document.querySelector('#home');
+const form = home.querySelector('form');
+
 const room = document.querySelector('#room');
-const form = room.querySelector('form');
 
 const socket = io();
 
+const showRoom = (roomName) => {
+  home.hidden = true;
+  room.hidden = false;
+  const h3 = room.querySelector('h3');
+  h3.innerText = 'Room name : ' + roomName;
+};
 const handleSubmit = (event) => {
   event.preventDefault();
   const input = form.querySelector('input');
-  socket.emit('enter_room', { payload: input.value }, () => {
-    console.log('Server is done!');
-  });
+  socket.emit('enter_room', input.value, showRoom);
 };
 form.addEventListener('submit', handleSubmit);
 

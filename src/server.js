@@ -2,6 +2,7 @@ import http from 'http';
 import WebSocket from 'ws';
 import SocketIO from 'socket.io';
 import express from 'express';
+import { eventNames } from 'process';
 
 const app = express();
 app.set('view engine', 'pug');
@@ -19,12 +20,17 @@ const server = http.createServer(app);
 const io = SocketIO(server);
 
 io.on('connection', (socket) => {
-  socket.on('enter_room', (msg, done) => {
-    console.log(msg);
-    console.log(typeof msg);
-    setTimeout(() => {
-      done();
-    }, 5000);
+  socket.onAny((eventName) => {
+    console.log('Socket event :', eventName);
+  });
+  socket.on('enter_room', (roomName, showRoom) => {
+    console.log(socket.id);
+    console.log(socket.rooms);
+
+    socket.join(roomName);
+    console.log(socket.rooms);
+
+    showRoom(roomName);
   });
 });
 
