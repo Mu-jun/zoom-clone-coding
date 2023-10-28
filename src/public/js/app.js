@@ -2,6 +2,7 @@ const home = document.querySelector('#home');
 const form = home.querySelector('form');
 
 const room = document.querySelector('#room');
+let roomName;
 
 const socket = io();
 function addMessage(message) {
@@ -11,16 +12,29 @@ function addMessage(message) {
   ul.appendChild(li);
 }
 
-const showRoom = (roomName) => {
+const handleMessageSubmit = (event) => {
+  event.preventDefault();
+  const input = room.querySelector('input');
+  const msg = input.value;
+  socket.emit('new_message', msg, roomName, () => {
+    addMessage(`You : ${msg}`);
+  });
+  input.value = '';
+};
+
+const showRoom = () => {
   home.hidden = true;
   room.hidden = false;
   const h3 = room.querySelector('h3');
   h3.innerText = 'Room name : ' + roomName;
+  const form = room.querySelector('form');
+  form.addEventListener('submit', handleMessageSubmit);
 };
 const handleSubmit = (event) => {
   event.preventDefault();
   const input = form.querySelector('input');
-  socket.emit('enter_room', input.value, showRoom);
+  roomName = input.value;
+  socket.emit('enter_room', roomName, showRoom);
 };
 form.addEventListener('submit', handleSubmit);
 
@@ -28,6 +42,11 @@ socket.on('welcome', () => {
   addMessage('Someone joined!');
 });
 
+socket.on('bye', () => {
+  addMessage('Someone left TT');
+});
+
+socket.on('new_message', addMessage);
 /* Using WebSocket
 const messageList = document.querySelector('ul');
 const nicknameForm = document.querySelector('form#nick');
