@@ -4,6 +4,12 @@ const form = home.querySelector('form');
 const room = document.querySelector('#room');
 
 const socket = io();
+function addMessage(message) {
+  const li = document.createElement('li');
+  li.innerText = message;
+  const ul = room.querySelector('ul');
+  ul.appendChild(li);
+}
 
 const showRoom = (roomName) => {
   home.hidden = true;
@@ -17,6 +23,10 @@ const handleSubmit = (event) => {
   socket.emit('enter_room', input.value, showRoom);
 };
 form.addEventListener('submit', handleSubmit);
+
+socket.on('welcome', () => {
+  addMessage('Someone joined!');
+});
 
 /* Using WebSocket
 const messageList = document.querySelector('ul');

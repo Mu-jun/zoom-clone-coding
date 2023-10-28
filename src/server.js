@@ -23,14 +23,11 @@ io.on('connection', (socket) => {
   socket.onAny((eventName) => {
     console.log('Socket event :', eventName);
   });
+
   socket.on('enter_room', (roomName, showRoom) => {
-    console.log(socket.id);
-    console.log(socket.rooms);
-
     socket.join(roomName);
-    console.log(socket.rooms);
-
     showRoom(roomName);
+    socket.to(roomName).emit('welcome');
   });
 });
 
