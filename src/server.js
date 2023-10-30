@@ -38,6 +38,8 @@ function countRoomUser(roomName) {
 
 io.on('connection', (socket) => {
   socket['nickname'] = 'Anonymous';
+  console.log(adapter.sids.size); // 첫 접속 시 한 번만 실행한다는 것을 검증하기 위함.
+  socket.emit('rooms_change', getPublicRooms());
   socket.onAny((eventName) => {
     console.log('Socket event :', eventName);
   });
