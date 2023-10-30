@@ -19,6 +19,19 @@ const server = http.createServer(app);
 // Using Socket.IO
 const io = SocketIO(server);
 
+function getPublicRooms() {
+  const adapter = io.sockets.adapter;
+  const rooms = adapter.rooms;
+  const sids = adapter.sids;
+  const publicRooms = [];
+  rooms.forEach((_, key) => {
+    if (sids.get(key) === undefined) {
+      publicRooms.push(key);
+    }
+  });
+  return publicRooms;
+}
+
 io.on('connection', (socket) => {
   socket['nickname'] = 'Anonymous';
   socket.onAny((eventName) => {
@@ -29,12 +42,17 @@ io.on('connection', (socket) => {
     socket.join(roomName);
     showRoom(roomName);
     socket.to(roomName).emit('welcome', socket.nickname);
+    io.emit('rooms_change', getPublicRooms());
   });
 
   socket.on('disconnecting', () => {
     socket.rooms.forEach((roomName) => {
       socket.to(roomName).emit('bye', socket.nickname);
     });
+  });
+
+  socket.on('disconnect', () => {
+    io.emit('rooms_change', getPublicRooms());
   });
 
   socket.on('new_message', (msg, roomName, done) => {
