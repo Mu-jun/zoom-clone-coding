@@ -9,30 +9,9 @@ html(lang="ko")
     header 
       h1 Cloning Zoom
     main 
-      div#nickname
-        h3 My Nickname : Anonymous
-        form
-          input(type="text" placeholder='choose a nickname', required)
-          button Save
-      div#home
-        form
-          input(type='text' placeholder='room name', required)
-          button Enter the room
-        h3 Public Room List
-        ul#roomList
-      div#room(hidden)
-        h3
-        ul 
-        form
-          input(type="text" placeholder='write a msg', required)
-          button Send
-
-      //- form#nick
-      //-   input(type="text" placeholder='choose a nickname', required)
-      //-   button Save
-      //- ul 
-      //- form#msg
-      //-   input(type="text" placeholder='write a msg', required)
-      //-   button Send
+      div#myStream
+        Video#myFace(autoplay, playsinline, width='400')
+      button#mute Mute
+      button#camera Camera Off
     script(src="/socket.io/socket.io.js") 
     script(src="/public/js/app.js") 
