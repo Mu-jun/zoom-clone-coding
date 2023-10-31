@@ -28,3 +28,7 @@ Learn WebSockets, WebRTC only with JS by Zoom clone coding
 - 매개변수를 여러개 보낼 수 있다.
 - 완료되었을 때 client에서 실행될 callback 함수를 보낼 수 있다.(<U>callback 함수는 꼭 마지막 매개변수에 넣어야함.</U>)
   - 흐름제어? 제어의 역전?
+
+# Video Tag (\<video />)
+
+- IOS에서 자동재생 되기 위해서는 playsinline 속성이 추가적으로 필요함.
