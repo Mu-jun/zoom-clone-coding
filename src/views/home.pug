@@ -10,7 +10,8 @@ html(lang="ko")
       h1 Cloning Zoom
     main 
       div#myStream
-        Video#myFace(autoplay, playsinline, width='400')
+        Video#myFace(autoplay, playsinline, width='400' height='400')
+      select#cameras
       button#mute Mute
       button#camera Camera Off
     script(src="/socket.io/socket.io.js") 
