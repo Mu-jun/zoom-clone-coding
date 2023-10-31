@@ -17,28 +17,36 @@ async function getCameras() {
       const option = document.createElement('option');
       option.value = camera.deviceId;
       option.innerText = camera.label;
+      const currentCamera = myStream.getVideoTracks()[0];
+      if (currentCamera == camera.label) {
+        option.selected = true;
+      }
       camerasSelect.appendChild(option);
     });
-    console.log(cameras);
   } catch (e) {
     console.log(e);
   }
 }
 
-async function getUserMedia() {
+async function getUserMedia(deviceId) {
+  const constraints = {
+    audio: true,
+    video: { facingMode: 'user' },
+  };
+  if (deviceId) {
+    constraints.video = {
+      deviceId: {
+        exact: deviceId,
+      },
+    };
+  }
   try {
-    myStream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
+    myStream = await navigator.mediaDevices.getUserMedia(constraints);
     myFace.srcObject = myStream;
-    await getCameras();
   } catch (e) {
     console.log(e);
   }
 }
-
-getUserMedia();
 
 function handleMuteClick() {
   myStream.getAudioTracks().forEach((audio) => (audio.enabled = muteFlag));
@@ -60,5 +68,15 @@ function handleCameraClick() {
     cameraBtn.innerText = 'Camera Off';
   }
 }
+function handleCameraChange() {
+  getUserMedia(camerasSelect.value);
+}
+
 muteBtn.addEventListener('click', handleMuteClick);
 cameraBtn.addEventListener('click', handleCameraClick);
+camerasSelect.addEventListener('change', handleCameraChange);
+
+window.addEventListener('load', async () => {
+  await getUserMedia();
+  await getCameras();
+});
