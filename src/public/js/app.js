@@ -1,3 +1,4 @@
+const call = document.getElementById('call');
 const myFace = document.getElementById('myFace');
 
 const muteBtn = document.getElementById('mute');
@@ -8,6 +9,7 @@ const socket = io();
 let myStream;
 let muteFlag = false;
 let cameraFlag = true;
+let roomName;
 
 async function getCameras() {
   try {
@@ -43,6 +45,7 @@ async function getUserMedia(deviceId) {
   try {
     myStream = await navigator.mediaDevices.getUserMedia(constraints);
     myFace.srcObject = myStream;
+    if (!deviceId) getCameras();
   } catch (e) {
     console.log(e);
   }
@@ -76,7 +79,29 @@ muteBtn.addEventListener('click', handleMuteClick);
 cameraBtn.addEventListener('click', handleCameraClick);
 camerasSelect.addEventListener('change', handleCameraChange);
 
-window.addEventListener('load', async () => {
-  await getUserMedia();
-  await getCameras();
+// Welcome Form (join a room)
+
+const welcome = document.getElementById('welcome');
+const welcomeForm = welcome.querySelector('form');
+
+function startMedia() {
+  welcome.hidden = true;
+  call.hidden = false;
+  getUserMedia();
+}
+
+function handleWelcomeSubmit(event) {
+  event.preventDefault();
+  const input = welcome.querySelector('input');
+  roomName = input.value;
+  socket.emit('join_room', roomName, startMedia);
+  input.value = '';
+}
+
+welcomeForm.addEventListener('submit', handleWelcomeSubmit);
+
+// socket event
+
+socket.on('welcome', () => {
+  console.log('someone join!');
 });

@@ -12,87 +12,19 @@ app.use('/public', express.static(__dirname + '/public'));
 app.get('/', (req, res) => res.render('home'));
 app.get('/*', (req, res) => res.redirect('/'));
 
-const listenHandler = () => console.log('Listening on http://localhost:3000');
-
 const server = http.createServer(app);
 
 // Using Socket.IO
 const io = SocketIO(server);
-const adapter = io.sockets.adapter;
-
-function getPublicRooms() {
-  const rooms = adapter.rooms;
-  const sids = adapter.sids;
-  const publicRooms = [];
-  rooms.forEach((_, key) => {
-    if (sids.get(key) === undefined) {
-      publicRooms.push(key);
-    }
-  });
-  return publicRooms;
-}
-
-function countRoomUser(roomName) {
-  return adapter.rooms.get(roomName)?.size;
-}
 
 io.on('connection', (socket) => {
-  socket['nickname'] = 'Anonymous';
-  socket.emit('rooms_change', getPublicRooms());
-  socket.onAny((eventName) => {
-    console.log('Socket event :', eventName);
-  });
-
-  socket.on('enter_room', (roomName, showRoom) => {
+  socket.on('join_room', (roomName, done) => {
+    console.log(roomName);
     socket.join(roomName);
-    showRoom(roomName);
-    io.to(roomName).emit('welcome', socket.nickname, countRoomUser(roomName));
-    socket.broadcast.emit('rooms_change', getPublicRooms());
-  });
-
-  socket.on('disconnecting', () => {
-    socket.rooms.forEach((roomName) => {
-      io.to(roomName).emit('bye', socket.nickname, countRoomUser(roomName) - 1);
-    });
-  });
-
-  socket.on('disconnect', () => {
-    io.emit('rooms_change', getPublicRooms());
-  });
-
-  socket.on('new_message', (msg, roomName, done) => {
-    socket.to(roomName).emit('new_message', `${socket.nickname} : ${msg}`);
     done();
-  });
-
-  socket.on('nickname', (nickname, done) => {
-    socket['nickname'] = nickname;
-    done();
+    socket.to(roomName).emit('welcome');
   });
 });
 
-/* Using WebSocket
-const wss = new WebSocket.Server({ server }); // 매개변수 없어도 됨.
-const sockets = [];
-
-wss.on('connection', (socket) => {
-  sockets.push(socket);
-  socket.on('message', (data) => {
-    const socketMessage = JSON.parse(data.toString('utf8'));
-    switch (socketMessage.type) {
-      case 'nickname':
-        socket['nickname'] = socketMessage.payload;
-        break;
-      case 'message':
-        sockets.forEach((aSocket) =>
-          aSocket.send(`${socket.nickname}: ${socketMessage.payload}`)
-        );
-    }
-  });
-  socket.on('close', () => {
-    console.log(`Disconneted from the ${socket.nickname}`);
-  });
-  console.log('Connect to the Browser');
-}); */
-
+const listenHandler = () => console.log('Listening on http://localhost:3000');
 server.listen(3000, listenHandler);
