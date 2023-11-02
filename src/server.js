@@ -28,6 +28,11 @@ io.on('connection', (socket) => {
   socket.on('answer', (answer, roomName) => {
     socket.to(roomName).emit('answer', answer);
   });
+
+  socket.on('ice', (ice, roomName) => {
+    console.log('ice');
+    socket.to(roomName).emit('ice', ice);
+  });
 });
 
 const listenHandler = () => console.log('Listening on http://localhost:3000');

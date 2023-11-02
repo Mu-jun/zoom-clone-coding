@@ -14,8 +14,9 @@ html(lang="ko")
           input(type="text" placeholder="room name", required)
           button Enter Room
       div#call(hidden)
-        div#myStream
+        div
           Video#myFace(autoplay, playsinline, width='400' height='400')
+          Video#peerFace(autoplay, playsinline, width='400' height='400')
         select#cameras
         button#mute Mute
         button#camera Camera Off
