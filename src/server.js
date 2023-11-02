@@ -1,8 +1,6 @@
 import http from 'http';
-import WebSocket from 'ws';
 import SocketIO from 'socket.io';
 import express from 'express';
-import { eventNames } from 'process';
 
 const app = express();
 app.set('view engine', 'pug');
@@ -19,10 +17,13 @@ const io = SocketIO(server);
 
 io.on('connection', (socket) => {
   socket.on('join_room', (roomName, done) => {
-    console.log(roomName);
     socket.join(roomName);
     done();
     socket.to(roomName).emit('welcome');
+  });
+
+  socket.on('offer', (offer, roomName) => {
+    socket.to(roomName).emit('offer', offer);
   });
 });
 
