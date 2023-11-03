@@ -43,3 +43,13 @@ Learn WebSockets, WebRTC only with JS by Zoom clone coding
 ## [스트림 전송](https://webrtc.org/getting-started/remote-streams?hl=ko)
 
 ## [Sender](https://developer.mozilla.org/en-US/docs/Web/API/RTCRtpSender)
+
+## STUN Server
+
+- 서로 다른 네트워크에 있는 Peer를 연결해 주기 위해 필요함.
+- NAT의 유형 및 NAT에 의해 특정 로컬 포트와 연결된 인터넷 측 포트를 찾을 수 있도록 해주는 역할
+
+# localtunnel
+
+- `npx localtunnel --port 3000`
+- local 서버의 url을 생성해 줌.

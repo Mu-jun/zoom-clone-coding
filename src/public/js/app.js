@@ -154,7 +154,23 @@ async function handleAddStream(data) {
 }
 
 function makeConnection() {
-  myPeerConnection = new RTCPeerConnection();
+  // 아래 STUN 서버는 구글에서 개발 및 테스트를 위해 제공하는 무료서버이므로
+  // 실제 product에서는 사용x
+  // xirsys 등 STUN 서버 제공 서비스 검색 ㄱㄱ
+  const configuration = {
+    iceServers: [
+      {
+        urls: [
+          'stun:stun.l.google.com:19302',
+          'stun:stun1.l.google.com:19302',
+          'stun:stun2.l.google.com:19302',
+          'stun:stun3.l.google.com:19302',
+          'stun:stun4.l.google.com:19302',
+        ],
+      },
+    ],
+  };
+  myPeerConnection = new RTCPeerConnection(configuration);
   myPeerConnection.addEventListener('icecandidate', handleIce);
   myPeerConnection.addEventListener('track', handleAddStream);
   myStream
