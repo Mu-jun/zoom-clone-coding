@@ -37,3 +37,9 @@ Learn WebSockets, WebRTC only with JS by Zoom clone coding
 
 - 사용자끼리 peer-to-peer(P2P)로 연결하여 텍스트, 영상, 오디오 등을 전송할 수 있게 브라우저 간에 서로 통신할 수 있도록 설계된 API
 - 사용자끼리 연결되기 위해 서버가 Signaling 해주어야 함.
+
+## [피어 연결](https://webrtc.org/getting-started/peer-connections?hl=ko)
+
+## [스트림 전송](https://webrtc.org/getting-started/remote-streams?hl=ko)
+
+## [Sender](https://developer.mozilla.org/en-US/docs/Web/API/RTCRtpSender)

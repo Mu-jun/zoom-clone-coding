@@ -30,7 +30,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('ice', (ice, roomName) => {
-    console.log('ice');
     socket.to(roomName).emit('ice', ice);
   });
 });
