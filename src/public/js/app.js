@@ -4,6 +4,10 @@ const myFace = document.getElementById('myFace');
 const muteBtn = document.getElementById('mute');
 const cameraBtn = document.getElementById('camera');
 const camerasSelect = document.getElementById('cameras');
+
+const chat = document.getElementById('chat');
+const chatForm = chat.querySelector('form');
+
 const socket = io();
 
 let myStream;
@@ -11,6 +15,7 @@ let muteFlag = false;
 let cameraFlag = true;
 let roomName;
 let myPeerConnection;
+let myDataChannel;
 
 async function getCameras() {
   try {
@@ -110,9 +115,34 @@ async function handleWelcomeSubmit(event) {
 
 welcomeForm.addEventListener('submit', handleWelcomeSubmit);
 
+function addMessage(message) {
+  const ul = chat.querySelector('ul');
+  const li = document.createElement('li');
+  li.innerText = message;
+  ul.appendChild(li);
+}
+
+function handleChatsubmit(evnet) {
+  event.preventDefault();
+  const input = chatForm.querySelector('input');
+  const message = input.value;
+  input.value = '';
+  myDataChannel.send(message);
+  addMessage(`You : ${message}`);
+}
+chatForm.addEventListener('submit', handleChatsubmit);
+
 // socket event
 
+function handleRTCMessage(event) {
+  console.log(event);
+  const message = event.data;
+  addMessage(message);
+}
+
 socket.on('welcome', async () => {
+  myDataChannel = myPeerConnection.createDataChannel('chat');
+  myDataChannel.addEventListener('message', handleRTCMessage);
   const offer = await myPeerConnection.createOffer();
   await myPeerConnection.setLocalDescription(offer);
   console.log('sent the offer');
@@ -145,12 +175,16 @@ function handleIce(data) {
   socket.emit('ice', data.candidate, roomName);
 }
 
-async function handleAddStream(data) {
+function handleAddStream(data) {
   const peerFace = document.getElementById('peerFace');
   const [remoteStream] = data.streams;
-  console.log('remoteStream : ', remoteStream);
-  console.log('myStream : ', myStream);
   peerFace.srcObject = remoteStream;
+}
+
+function handleAddDataChannel(event) {
+  myDataChannel = event.channel;
+  myDataChannel.addEventListener('message', handleRTCMessage);
+  addMessage(`${roomName} 방에 들어왔습니다.`);
 }
 
 function makeConnection() {
@@ -173,6 +207,7 @@ function makeConnection() {
   myPeerConnection = new RTCPeerConnection(configuration);
   myPeerConnection.addEventListener('icecandidate', handleIce);
   myPeerConnection.addEventListener('track', handleAddStream);
+  myPeerConnection.addEventListener('datachannel', handleAddDataChannel);
   myStream
     .getTracks()
     .forEach((track) => myPeerConnection.addTrack(track, myStream));

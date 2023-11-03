@@ -20,5 +20,10 @@ html(lang="ko")
         select#cameras
         button#mute Mute
         button#camera Camera Off
+        div#chat
+          ul 
+          form
+            input(type="text" placeholder="write a message", required)
+            button Send
     script(src="/socket.io/socket.io.js") 
     script(src="/public/js/app.js") 
