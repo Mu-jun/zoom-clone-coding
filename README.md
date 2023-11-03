@@ -49,6 +49,11 @@ Learn WebSockets, WebRTC only with JS by Zoom clone coding
 - 서로 다른 네트워크에 있는 Peer를 연결해 주기 위해 필요함.
 - NAT의 유형 및 NAT에 의해 특정 로컬 포트와 연결된 인터넷 측 포트를 찾을 수 있도록 해주는 역할
 
+## WebRTC를 사용하면 안 되는 환경
+
+- peer 수가 매우 많아질 경우(고사양?고용량? 스트림의 경우) => 그물망 구조가 됨.
+  - 해결법 : SFU(Selective Forwarding Unit) 사용 : 중요하지 않은 스트림을 압축하여 저사양의 스트림으로 전달
+
 # localtunnel
 
 - `npx localtunnel --port 3000`
