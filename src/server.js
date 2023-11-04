@@ -22,20 +22,16 @@ io.on('connection', (socket) => {
     socket.to(roomName).emit('welcome', socketId);
   });
 
-  socket.on('msg', (targetId) => {
-    socket.to(targetId).emit('msg', 'hi');
+  socket.on('offer', (offer, targetId, senderId) => {
+    socket.to(targetId).emit('offer', offer, senderId);
   });
 
-  socket.on('offer', (offer, roomName, senderId) => {
-    socket.to(roomName).emit('offer', offer, senderId);
+  socket.on('answer', (answer, targetId, senderId) => {
+    socket.to(targetId).emit('answer', answer, senderId);
   });
 
-  socket.on('answer', (answer, roomName) => {
-    socket.to(roomName).emit('answer', answer);
-  });
-
-  socket.on('ice', (ice, roomName) => {
-    socket.to(roomName).emit('ice', ice);
+  socket.on('ice', (ice, targetId, senderId) => {
+    socket.to(targetId).emit('ice', ice, senderId);
   });
 });
 

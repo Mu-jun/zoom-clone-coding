@@ -15,7 +15,7 @@ let muteFlag = false;
 let cameraFlag = true;
 let roomName;
 let myPeerConnections = {};
-let myDataChannels = {};
+let myDataChannels = new Map();
 
 async function getCameras() {
   try {
@@ -126,7 +126,7 @@ function handleChatsubmit(evnet) {
   const input = chatForm.querySelector('input');
   const message = input.value;
   input.value = '';
-  myDataChannel.send(message);
+  myDataChannels.forEach((dc) => dc.send(message));
   addMessage(`You : ${message}`);
 }
 chatForm.addEventListener('submit', handleChatsubmit);
@@ -134,7 +134,6 @@ chatForm.addEventListener('submit', handleChatsubmit);
 // socket event
 
 function handleRTCMessage(event) {
-  console.log(event);
   const message = event.data;
   addMessage(message);
 }
@@ -143,69 +142,65 @@ socket.on('join_complete', (socketId) => {
   mySoketId = socketId;
 });
 
-socket.on('msg', (msg) => {
-  console.log(msg);
-});
-
 socket.on('welcome', async (newSocketId) => {
   console.log(`${newSocketId} joined!`);
-  socket.emit('msg', newSocketId);
-  const pc = makeConnection();
+  const pc = makeConnection(newSocketId);
   const dc = pc.createDataChannel('chat');
   dc.addEventListener('message', handleRTCMessage);
-  dc.addEventListener('open', console.log);
-  dc.addEventListener('close', console.log);
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
   myPeerConnections[newSocketId] = pc;
-  myDataChannels[newSocketId] = dc;
+  myDataChannels.set(newSocketId, dc);
 
   console.log('sent the offer');
-  socket.emit('offer', offer, roomName, mySoketId);
+  socket.emit('offer', offer, newSocketId, socket.id);
 });
 
 socket.on('offer', async (offer, senderId) => {
-  const pc = makeConnection();
+  const pc = makeConnection(senderId);
   console.log('received the offer');
   pc.setRemoteDescription(offer);
   const answer = await pc.createAnswer();
   await pc.setLocalDescription(answer);
   console.log('sent the answer');
-  socket.emit('answer', answer, roomName, mySoketId);
+  socket.emit('answer', answer, senderId, socket.id);
 });
 
-// socket.on('answer', (answer) => {
-//   console.log('received the answer');
-//   myPeerConnection.setRemoteDescription(answer);
-// });
+socket.on('answer', (answer, senderId) => {
+  console.log('received the answer');
+  const pc = myPeerConnections[senderId];
+  pc.setRemoteDescription(answer);
+});
 
-// socket.on('ice', (ice) => {
-//   console.log('received the IceCandidate');
-//   myPeerConnection.addIceCandidate(ice);
-// });
+socket.on('ice', (ice, senderId) => {
+  console.log('received the IceCandidate');
+  const pc = myPeerConnections[senderId];
+  pc.addIceCandidate(ice);
+});
 
 // RTC code
 
-function handleIce(data) {
-  console.log('got a my IceCandidate');
-  socket.emit('ice', data.candidate, roomName);
-}
+function makeConnection(targetId) {
+  function handleIce(data) {
+    console.log('got a my IceCandidate');
+    socket.emit('ice', data.candidate, targetId, socket.id);
+  }
 
-function handleAddStream(data) {
-  const peerFace = document.getElementById('peerFace');
-  const [remoteStream] = data.streams;
-  peerFace.srcObject = remoteStream;
-}
+  function handleAddStream(data) {
+    const peerFace = document.getElementById('peerFace');
+    const [remoteStream] = data.streams;
+    peerFace.srcObject = remoteStream;
+  }
 
-function handleAddDataChannel(event) {
-  myDataChannel = event.channel;
-  myDataChannel.addEventListener('message', handleRTCMessage);
-  myDataChannel.addEventListener('close', console.log);
-  addMessage(`${roomName} 방에 들어왔습니다.`);
-}
+  function handleAddDataChannel(event) {
+    const dc = event.channel;
+    dc.addEventListener('message', handleRTCMessage);
+    dc.addEventListener('close', console.log);
+    myDataChannels.set(targetId, dc);
 
-function makeConnection() {
+    addMessage(`${roomName} 방에 들어왔습니다.`);
+  }
   // 아래 STUN 서버는 구글에서 개발 및 테스트를 위해 제공하는 무료서버이므로
   // 실제 product에서는 사용x
   // xirsys 등 STUN 서버 제공 서비스 검색 ㄱㄱ
@@ -220,12 +215,10 @@ function makeConnection() {
       },
     ],
   };
-  const myPeerConnection = new RTCPeerConnection(configuration);
-  myPeerConnection.addEventListener('icecandidate', handleIce);
-  myPeerConnection.addEventListener('track', handleAddStream);
-  myPeerConnection.addEventListener('datachannel', handleAddDataChannel);
-  myStream
-    .getTracks()
-    .forEach((track) => myPeerConnection.addTrack(track, myStream));
-  return myPeerConnection;
+  const pc = new RTCPeerConnection(configuration);
+  pc.addEventListener('icecandidate', handleIce);
+  pc.addEventListener('track', handleAddStream);
+  pc.addEventListener('datachannel', handleAddDataChannel);
+  myStream.getTracks().forEach((track) => pc.addTrack(track, myStream));
+  return pc;
 }
