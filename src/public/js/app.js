@@ -159,10 +159,13 @@ socket.on('welcome', async (newSocketId) => {
 
 socket.on('offer', async (offer, senderId) => {
   const pc = makeConnection(senderId);
+  myPeerConnections[senderId] = pc;
+
   console.log('received the offer');
   pc.setRemoteDescription(offer);
   const answer = await pc.createAnswer();
   await pc.setLocalDescription(answer);
+
   console.log('sent the answer');
   socket.emit('answer', answer, senderId, socket.id);
 });
