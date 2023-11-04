@@ -14,8 +14,8 @@ let myStream;
 let muteFlag = false;
 let cameraFlag = true;
 let roomName;
-let myPeerConnection;
-let myDataChannel;
+let myPeerConnections = {};
+let myDataChannels = {};
 
 async function getCameras() {
   try {
@@ -101,7 +101,6 @@ async function initCall() {
   welcome.hidden = true;
   call.hidden = false;
   await getUserMedia();
-  makeConnection();
 }
 
 async function handleWelcomeSubmit(event) {
@@ -109,7 +108,7 @@ async function handleWelcomeSubmit(event) {
   const input = welcome.querySelector('input');
   roomName = input.value;
   await initCall();
-  socket.emit('join_room', roomName);
+  socket.emit('join_room', roomName, socket.id);
   input.value = '';
 }
 
@@ -140,33 +139,51 @@ function handleRTCMessage(event) {
   addMessage(message);
 }
 
-socket.on('welcome', async () => {
-  myDataChannel = myPeerConnection.createDataChannel('chat');
-  myDataChannel.addEventListener('message', handleRTCMessage);
-  const offer = await myPeerConnection.createOffer();
-  await myPeerConnection.setLocalDescription(offer);
+socket.on('join_complete', (socketId) => {
+  mySoketId = socketId;
+});
+
+socket.on('msg', (msg) => {
+  console.log(msg);
+});
+
+socket.on('welcome', async (newSocketId) => {
+  console.log(`${newSocketId} joined!`);
+  socket.emit('msg', newSocketId);
+  const pc = makeConnection();
+  const dc = pc.createDataChannel('chat');
+  dc.addEventListener('message', handleRTCMessage);
+  dc.addEventListener('open', console.log);
+  dc.addEventListener('close', console.log);
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  myPeerConnections[newSocketId] = pc;
+  myDataChannels[newSocketId] = dc;
+
   console.log('sent the offer');
-  socket.emit('offer', offer, roomName);
+  socket.emit('offer', offer, roomName, mySoketId);
 });
 
-socket.on('offer', async (offer) => {
+socket.on('offer', async (offer, senderId) => {
+  const pc = makeConnection();
   console.log('received the offer');
-  myPeerConnection.setRemoteDescription(offer);
-  const answer = await myPeerConnection.createAnswer();
-  await myPeerConnection.setLocalDescription(answer);
+  pc.setRemoteDescription(offer);
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
   console.log('sent the answer');
-  socket.emit('answer', answer, roomName);
+  socket.emit('answer', answer, roomName, mySoketId);
 });
 
-socket.on('answer', (answer) => {
-  console.log('received the answer');
-  myPeerConnection.setRemoteDescription(answer);
-});
+// socket.on('answer', (answer) => {
+//   console.log('received the answer');
+//   myPeerConnection.setRemoteDescription(answer);
+// });
 
-socket.on('ice', (ice) => {
-  console.log('received the IceCandidate');
-  myPeerConnection.addIceCandidate(ice);
-});
+// socket.on('ice', (ice) => {
+//   console.log('received the IceCandidate');
+//   myPeerConnection.addIceCandidate(ice);
+// });
 
 // RTC code
 
@@ -184,6 +201,7 @@ function handleAddStream(data) {
 function handleAddDataChannel(event) {
   myDataChannel = event.channel;
   myDataChannel.addEventListener('message', handleRTCMessage);
+  myDataChannel.addEventListener('close', console.log);
   addMessage(`${roomName} 방에 들어왔습니다.`);
 }
 
@@ -198,17 +216,16 @@ function makeConnection() {
           'stun:stun.l.google.com:19302',
           'stun:stun1.l.google.com:19302',
           'stun:stun2.l.google.com:19302',
-          'stun:stun3.l.google.com:19302',
-          'stun:stun4.l.google.com:19302',
         ],
       },
     ],
   };
-  myPeerConnection = new RTCPeerConnection(configuration);
+  const myPeerConnection = new RTCPeerConnection(configuration);
   myPeerConnection.addEventListener('icecandidate', handleIce);
   myPeerConnection.addEventListener('track', handleAddStream);
   myPeerConnection.addEventListener('datachannel', handleAddDataChannel);
   myStream
     .getTracks()
     .forEach((track) => myPeerConnection.addTrack(track, myStream));
+  return myPeerConnection;
 }

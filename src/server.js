@@ -16,13 +16,18 @@ const server = http.createServer(app);
 const io = SocketIO(server);
 
 io.on('connection', (socket) => {
-  socket.on('join_room', (roomName) => {
+  socket.on('join_room', (roomName, socketId) => {
     socket.join(roomName);
-    socket.to(roomName).emit('welcome');
+    socket.emit('join_complete', socketId);
+    socket.to(roomName).emit('welcome', socketId);
   });
 
-  socket.on('offer', (offer, roomName) => {
-    socket.to(roomName).emit('offer', offer);
+  socket.on('msg', (targetId) => {
+    socket.to(targetId).emit('msg', 'hi');
+  });
+
+  socket.on('offer', (offer, roomName, senderId) => {
+    socket.to(roomName).emit('offer', offer, senderId);
   });
 
   socket.on('answer', (answer, roomName) => {
