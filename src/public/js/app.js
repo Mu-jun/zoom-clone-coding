@@ -79,12 +79,14 @@ function handleCameraClick() {
 }
 async function handleCameraChange() {
   await getUserMedia(camerasSelect.value);
-  if (myPeerConnection) {
+  if (myPeerConnections.size > 0) {
     const videoTrack = myStream.getVideoTracks()[0];
-    const videoSender = myPeerConnection
-      .getSenders()
-      .find((sender) => sender.track.kind === 'video');
-    videoSender.replaceTrack(videoTrack);
+    myPeerConnections.forEach((pc) => {
+      const videoSender = pc
+        .getSenders()
+        .find((sender) => sender.track.kind === 'video');
+      videoSender.replaceTrack(videoTrack);
+    });
   }
 }
 
