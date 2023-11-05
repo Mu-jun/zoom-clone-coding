@@ -18,7 +18,6 @@ const io = SocketIO(server);
 io.on('connection', (socket) => {
   socket.on('join_room', (roomName, socketId) => {
     socket.join(roomName);
-    socket.emit('join_complete', socketId);
     socket.to(roomName).emit('welcome', socketId);
   });
 

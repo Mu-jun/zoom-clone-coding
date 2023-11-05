@@ -14,7 +14,7 @@ let myStream;
 let muteFlag = false;
 let cameraFlag = true;
 let roomName;
-let myPeerConnections = {};
+let myPeerConnections = new Map();
 let myDataChannels = new Map();
 
 async function getCameras() {
@@ -138,10 +138,6 @@ function handleRTCMessage(event) {
   addMessage(message);
 }
 
-socket.on('join_complete', (socketId) => {
-  mySoketId = socketId;
-});
-
 socket.on('welcome', async (newSocketId) => {
   console.log(`${newSocketId} joined!`);
   const pc = makeConnection(newSocketId);
@@ -150,7 +146,7 @@ socket.on('welcome', async (newSocketId) => {
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  myPeerConnections[newSocketId] = pc;
+  myPeerConnections.set(newSocketId, pc);
   myDataChannels.set(newSocketId, dc);
 
   console.log('sent the offer');
@@ -159,7 +155,7 @@ socket.on('welcome', async (newSocketId) => {
 
 socket.on('offer', async (offer, senderId) => {
   const pc = makeConnection(senderId);
-  myPeerConnections[senderId] = pc;
+  myPeerConnections.set(senderId, pc);
 
   console.log('received the offer');
   pc.setRemoteDescription(offer);
@@ -172,13 +168,13 @@ socket.on('offer', async (offer, senderId) => {
 
 socket.on('answer', (answer, senderId) => {
   console.log('received the answer');
-  const pc = myPeerConnections[senderId];
+  const pc = myPeerConnections.get(senderId);
   pc.setRemoteDescription(answer);
 });
 
 socket.on('ice', (ice, senderId) => {
   console.log('received the IceCandidate');
-  const pc = myPeerConnections[senderId];
+  const pc = myPeerConnections.get(senderId);
   pc.addIceCandidate(ice);
 });
 
@@ -189,20 +185,48 @@ function makeConnection(targetId) {
     console.log('got a my IceCandidate');
     socket.emit('ice', data.candidate, targetId, socket.id);
   }
-
+  /*
+   * track 이벤트는 audio, video로 2번 발생하나
+   * 어떤 스트림을 연결하여도 비디오, 오디오 모두 정상 작동한다.
+   * 2번 발생하는 것을 이해하는데 스트림 상관없이 모두 정상 작동하는 것은
+   * why?
+   */
   function handleAddStream(data) {
-    const peerFace = document.getElementById('peerFace');
-    const [remoteStream] = data.streams;
-    peerFace.srcObject = remoteStream;
+    const peerFaces = document.getElementById('peerFaces');
+    if (data.track.kind === 'video') {
+      const peerFace = document.createElement('video');
+      peerFace.setAttribute('id', targetId);
+      peerFace.setAttribute('autoplay', '');
+      peerFace.setAttribute('playsinline', '');
+      peerFace.setAttribute('width', '200');
+      peerFace.setAttribute('height', '200');
+      const [remoteStream] = data.streams;
+      peerFace.srcObject = remoteStream;
+      peerFaces.appendChild(peerFace);
+    }
   }
 
   function handleAddDataChannel(event) {
     const dc = event.channel;
     dc.addEventListener('message', handleRTCMessage);
-    dc.addEventListener('close', console.log);
+    dc.addEventListener('open', () => {
+      const msg = `${targetId} 님이 들어오셨습니다.`;
+      dc.send(msg);
+    });
     myDataChannels.set(targetId, dc);
 
     addMessage(`${roomName} 방에 들어왔습니다.`);
+  }
+
+  function handleDisconnect(event) {
+    const pc = event.target;
+    if (pc.connectionState === 'disconnected') {
+      addMessage(`${targetId} 님이 나가셨습니다.`);
+      const video = document.querySelector(`video#${targetId}`);
+      video.remove();
+      myPeerConnections.delete(targetId);
+      myDataChannels.delete(targetId);
+    }
   }
   // 아래 STUN 서버는 구글에서 개발 및 테스트를 위해 제공하는 무료서버이므로
   // 실제 product에서는 사용x
@@ -222,6 +246,7 @@ function makeConnection(targetId) {
   pc.addEventListener('icecandidate', handleIce);
   pc.addEventListener('track', handleAddStream);
   pc.addEventListener('datachannel', handleAddDataChannel);
+  pc.addEventListener('connectionstatechange', handleDisconnect);
   myStream.getTracks().forEach((track) => pc.addTrack(track, myStream));
   return pc;
 }
