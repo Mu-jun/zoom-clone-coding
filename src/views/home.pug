@@ -9,19 +9,24 @@ html(lang="ko")
     header 
       h1 Cloning Zoom
     main 
-      div#welcome
+      section#welcome
         form
           input(type="text" placeholder="room name", required)
           button Enter Room
-      div#call(hidden)
+      section#call(hidden)
+        header#roomHeader
+          h2
+          button leave
         div
           div#peerFaces
-          Video#myFace(autoplay, playsinline, width='400' height='400')
-        select#cameras
-        button#mute Mute
-        button#camera Camera Off
+          Video#myFace(autoplay, playsinline)
+          div
+            select#cameras
+          button#mute Mute
+          button#camera Camera Off
         div#chat
-          ul 
+          div
+            ul 
           form
             input(type="text" placeholder="write a message", required)
             button Send

@@ -1,5 +1,7 @@
 const call = document.getElementById('call');
+const roomHeader = document.getElementById('roomHeader');
 const myFace = document.getElementById('myFace');
+const peerFaces = document.getElementById('peerFaces');
 
 const muteBtn = document.getElementById('mute');
 const cameraBtn = document.getElementById('camera');
@@ -102,7 +104,10 @@ const welcomeForm = welcome.querySelector('form');
 async function initCall() {
   welcome.hidden = true;
   call.hidden = false;
+  const h2 = roomHeader.querySelector('h2');
+  h2.innerText = roomName;
   await getUserMedia();
+  addMessage(`${roomName} 방에 들어왔습니다.`);
 }
 
 async function handleWelcomeSubmit(event) {
@@ -115,6 +120,25 @@ async function handleWelcomeSubmit(event) {
 }
 
 welcomeForm.addEventListener('submit', handleWelcomeSubmit);
+
+const leaveBtn = roomHeader.querySelector('button');
+function handleLeave(event) {
+  // peerConnection close
+  myPeerConnections.forEach((pc) => pc.close());
+
+  // socket leave
+  socket.emit('leave_room', roomName);
+
+  // resource clear
+  myPeerConnections.clear();
+  myDataChannels.clear();
+
+  // html clear
+  peerFaces.textContent = '';
+  call.hidden = true;
+  welcome.hidden = false;
+}
+leaveBtn.addEventListener('click', handleLeave);
 
 function addMessage(message) {
   const ul = chat.querySelector('ul');
@@ -141,7 +165,7 @@ function handleRTCMessage(event) {
 }
 
 socket.on('welcome', async (newSocketId) => {
-  console.log(`${newSocketId} joined!`);
+  console.log(`${newSocketId} joined! ${new Date()}`);
   const pc = makeConnection(newSocketId);
   const dc = pc.createDataChannel('chat');
   dc.addEventListener('message', handleRTCMessage);
@@ -194,7 +218,6 @@ function makeConnection(targetId) {
    * why?
    */
   function handleAddStream(data) {
-    const peerFaces = document.getElementById('peerFaces');
     if (data.track.kind === 'video') {
       const peerFace = document.createElement('video');
       peerFace.setAttribute('id', targetId);
@@ -216,8 +239,6 @@ function makeConnection(targetId) {
       dc.send(msg);
     });
     myDataChannels.set(targetId, dc);
-
-    addMessage(`${roomName} 방에 들어왔습니다.`);
   }
 
   function handleDisconnect(event) {
