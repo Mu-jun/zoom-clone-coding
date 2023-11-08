@@ -134,6 +134,8 @@ function handleLeave(event) {
   myDataChannels.clear();
 
   // html clear
+  const ul = chat.querySelector('ul');
+  ul.textContent = '';
   peerFaces.textContent = '';
   call.hidden = true;
   welcome.hidden = false;
